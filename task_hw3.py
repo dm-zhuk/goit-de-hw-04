@@ -11,9 +11,9 @@ spark = (
 spark.sparkContext.setLogLevel("WARN")
 
 # 2. Завантажуємо датасети
-users_df = spark.read.csv("users.csv", header=True, inferSchema=True)
-purchases_df = spark.read.csv("purchases.csv", header=True, inferSchema=True)
-products_df = spark.read.csv("products.csv", header=True, inferSchema=True)
+users_df = spark.read.csv("data/users.csv", header=True, inferSchema=True)
+purchases_df = spark.read.csv("data/purchases.csv", header=True, inferSchema=True)
+products_df = spark.read.csv("data/products.csv", header=True, inferSchema=True)
 
 # 2. Очищення даних
 users_clean = users_df.dropna()
