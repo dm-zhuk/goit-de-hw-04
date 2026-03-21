@@ -1,55 +1,37 @@
-# PySpark Data Analysis Project (DATA ENGINEERING)
+# PySpark Optimization & SparkUI Analysis (Homework 4)
 
-## Project Overview
-This project demonstrates a complete ETL (Extract, Transform, Load) pipeline using PySpark. It analyzes user purchase behavior across different product categories, with a specific focus on demographic segmentation (age group 18-25).
+This project focuses on understanding how Apache Spark executes jobs under the hood. By analyzing the SparkUI, we investigated the impact of intermediate actions and the efficiency of data caching in a distributed environment.
 
-### Tech Stack & Infrastructure
-- **Engine**: Apache Spark 3.5.1 (PySpark)
+## 🛠 Infrastructure
+**Execution**: Ubuntu VM on macOS (Dockerized Spark Cluster)
 
-- **Environment**: Hybrid Architecture
+**Configuration**: 2 Shuffle Partitions (spark.sql.shuffle.partitions=2)
 
-- **Local Development**: PyCharm on macOS
+**Environment**: VS Code Remote-SSH directly to the VM
 
-- **Execution**: Ubuntu VM running a Spark Cluster in Docker (multipass shell docker-vm)
+## 🔍 Execution Analysis
+### Part 1: Standard Execution (5 Jobs)
+In this baseline scenario, Spark uses Lazy Evaluation. It builds a logical plan and only executes it when the final collect() is called. The 5 jobs represent the overhead of reading the schema, repartitioning the data, and performing the aggregation.
 
-- **Version Control**: Git/GitHub
+![Part 1: 5 Jobs](screenshots/part1_5jobs.png)
 
-- **Deployment**: Automated SFTP sync between IDE and Remote VM
+### Part 2: Added Intermediate Action (8 Jobs)
+By adding a nuek_processed.collect() in the middle of the script, I triggered an extra execution. Because the data wasn't cached, Spark was forced to re-calculate the entire lineage (reading the CSV and grouping) for the second output. This resulted in 3 additional redundant jobs.
 
-### How to Run
-1. Ensure the Spark Docker cluster is active on the VM.
+![Part 2: 8 Jobs](screenshots/part2_8jobs.png)
 
-![Spark Docker cluster](screenshots/01_ubuntu_docker-vm.png)
+### Part 3: Optimized with Caching (7 Jobs)
+In the final iteration, I implemented .cache() before the first action.
 
-2. Place the CSV files in the shared `/opt/spark/work-dir`.
-3. Execute the job via Spark Submit:
-   ```bash
-   docker exec -it spark-master /opt/spark/bin/spark-submit --master spark://spark-master:7077 work-dir/task_hw3.py
-   ```
+**Result**: the second collect() only required 1 job because it pulled the pre-calculated results directly from the Executor Memory.
 
-### Key Tasks Performed
+**Observation**: we saved 1 job compared to Part 2, proving that caching is essential for iterative workflows.
 
-- Data Integration: Loaded and parsed multiple **CSV datasets** (users, products, purchases).
+![Part 3: 7 Jobs](screenshots/part3_7jobs.png)
 
-- Data Cleaning: Implemented automated handling of missing values (dropna).
+## 🧠 Key Takeaways
+**Lazy Evaluation**: Spark doesn't do work until it absolutely has to (at an Action).
 
-![Raw Data cleaned](screenshots/02_raw_data_cleaned.png)
+**The Cost of Actions**: every collect() or show() without a cache forces a full re-computation of the DataFrame's history.
 
-- Relational Joins: Performed complex multi-way joins to unify disparate data sources.
-
-![Joined Data](screenshots/03_joined_data.png)
-
-- Feature Engineering: Calculated total expenditure per transaction using Spark transformations.
-
-![Total Category Spending](screenshots/04_category_totals.png)
-
-- Demographic Analysis: Filtered and aggregated data to identify spending patterns for specific age cohorts.
-
-![Young User Spending](screenshots/05_category_young.png)
-
-- Statistical Reporting: Calculated percentage shares of total spending per category and ranked the top performers.
-
-![Final Top 3 Results](screenshots/06_category_young_top3.png)
-
-### Visualizations
-The results of the analysis, including intermediate transformations and final ranking tables, are captured via Spark's df.show() method and stored in the **/screenshots** directory of this repository.
+**Caching**: using .cache() or .persist() is the most effective way to optimize scripts that reuse the same intermediate data multiple times.
