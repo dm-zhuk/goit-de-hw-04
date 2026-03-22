@@ -29,6 +29,11 @@ In the final iteration, `.cache()` is implemented before the first action.
 **Observation**: we saved 1 job compared to Part 2, proving that caching is essential for iterative workflows.
 
 ![Part 3: 7 Jobs](screenshots/part3_7jobs.png)
+![Part 3: Storage](screenshots/part3_storage.png)
+
+- **Fraction Cached (100.00%):** The entire dataframe has been successfully loaded into memory. Spark will not have to access disk or recalculate join or groupBy on subsequent calls.
+- **Cached Partitions (2):** this confirms that our setting `spark.sql.shuffle.partitions = 2` workes correctly - the data is divided into exactly 2 parts.
+- **Storage Level (Memory Deserialized):** data is stored unpacked in RAM - this provides maximum access speed, since Spark does not waste time on deserialization.
 
 ## 🧠 Key Takeaways
 **Lazy evaluation**: Spark doesn't do work until it absolutely has to ('Action').
