@@ -2,7 +2,7 @@
 
 This project focuses on understanding how Apache Spark executes jobs under the hood. By analyzing the SparkUI, we investigated the impact of intermediate actions and the efficiency of data caching in a distributed environment.
 
-## 🛠 Infrastructure
+## Infrastructure
 **Execution**: Ubuntu VM on macOS (Dockerized Spark Cluster)
 
 **Configuration**: 2 Shuffle Partitions (spark.sql.shuffle.partitions=2)
@@ -10,7 +10,7 @@ This project focuses on understanding how Apache Spark executes jobs under the h
 **Environment**: VS Code Remote-SSH directly to the VM
   `(SparkSession.builder.master("spark://192.168.64.4:7077"))`
 
-## 🔍 Execution Analysis
+## Execution Analysis
 ### Part 1: standard execution (5 jobs)
 In this baseline scenario, Spark uses lazy evaluation. It builds a logical plan and only executes it when the final `collect()` is called. The 5 jobs represent the overhead of reading the schema, repartitioning the data, and performing the aggregation.
 
@@ -31,12 +31,12 @@ In the final iteration, `.cache()` is implemented before the first action.
 ![Part 3: 7 Jobs](screenshots/part3_7jobs.png)
 ![Part 3: Storage](screenshots/part3_storage.png)
 
-- **Fraction Cached (100.00%):** The entire dataframe has been successfully loaded into memory. Spark will not have to access disk or recalculate join or groupBy on subsequent calls.
+- **Fraction Cached (100.00%):** entire dataframe has been successfully loaded into memory. Spark will not have to access disk or recalculate *join* or *groupBy* on subsequent calls.
 - **Cached Partitions (2):** this confirms that our setting `spark.sql.shuffle.partitions = 2` workes correctly - the data is divided into exactly 2 parts.
 - **Storage Level (Memory Deserialized):** data is stored unpacked in RAM - this provides maximum access speed, since Spark does not waste time on deserialization.
 
-## 🧠 Key Takeaways
-**Lazy evaluation**: Spark doesn't do work until it absolutely has to ('Action').
+## Key Takeaways
+**Lazy evaluation**: Spark doesn't do work until it has to ('Action').
 
 **The cost of actions**: every `collect()` or `show()` without a cache forces a full re-compute of the DataFrame's history.
 
